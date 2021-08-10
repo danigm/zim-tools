@@ -1,0 +1,4 @@
+output/
+scripts/zimply.log
+podman/
+*.swp
