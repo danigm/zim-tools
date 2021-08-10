@@ -1,0 +1,45 @@
+name: Build index
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/openzim/mwoffliner:1.11.8
+      volumes:
+        - output:/output:rw
+    services:
+      redis:
+        image: redis
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Copy scripts
+        run: |
+          cp -rf scripts /scripts
+
+      - name: Install dependencies
+        run: |
+          curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+          python3 get-pip.py
+          pip3 install -r requirements.txt
+
+      - name: Build
+        run: |
+          /scripts/download.sh
+        env:
+          REDIS: "redis://redis:6379"
+
+      - name: Create index
+        run: |
+          /scripts/create-index.py /output/wikipedia_en_endless_maxi_`date +%Y-%m`.zim
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: "wikipedia-endless-en"
+          path: "/output"
